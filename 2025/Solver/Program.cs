@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Solver;
 
+/*
 Console.WriteLine($"Day 1 Safe Password - Part One: {Day1.DecodePasswordPart1()}");
 Console.WriteLine($"Day 1 Safe Password - Part Two: {Day1.DecodePasswordPart2()}");
 
@@ -10,3 +11,7 @@ Console.WriteLine($"Day 2 Incorrect Product ID - Part Two: {Day2.SumCountBadProd
 Console.WriteLine($"Day 3 Battery Jolts - Part One-A: {Day3.SumBatteryJoltsPart1A()}");
 Console.WriteLine($"Day 3 Battery Jolts - Part One-B: {Day3.SumBatteryJoltsPart1B()}");
 Console.WriteLine($"Day 3 Battery Jolts - Part Two: {Day3.SumBatteryJoltsPart2()}");
+*/
+
+Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part One: {Day4.SumAccessiblePaperRollsPart1()}");
+Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part Two: {Day4.SumAccessiblePaperRollsPart2()}");
