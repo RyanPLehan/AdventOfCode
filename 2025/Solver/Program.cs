@@ -6,3 +6,7 @@ Console.WriteLine($"Day 1 Safe Password - Part Two: {Day1.DecodePasswordPart2()}
 
 Console.WriteLine($"Day 2 Incorrect Product ID - Part One: {Day2.SumCountBadProductIdsPart1()}");
 Console.WriteLine($"Day 2 Incorrect Product ID - Part Two: {Day2.SumCountBadProductIdsPart2()}");
+
+Console.WriteLine($"Day 3 Battery Jolts - Part One-A: {Day3.SumBatteryJoltsPart1A()}");
+Console.WriteLine($"Day 3 Battery Jolts - Part One-B: {Day3.SumBatteryJoltsPart1B()}");
+Console.WriteLine($"Day 3 Battery Jolts - Part Two: {Day3.SumBatteryJoltsPart2()}");
