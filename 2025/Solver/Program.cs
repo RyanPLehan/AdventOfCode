@@ -11,7 +11,10 @@ Console.WriteLine($"Day 2 Incorrect Product ID - Part Two: {Day2.SumCountBadProd
 Console.WriteLine($"Day 3 Battery Jolts - Part One-A: {Day3.SumBatteryJoltsPart1A()}");
 Console.WriteLine($"Day 3 Battery Jolts - Part One-B: {Day3.SumBatteryJoltsPart1B()}");
 Console.WriteLine($"Day 3 Battery Jolts - Part Two: {Day3.SumBatteryJoltsPart2()}");
-*/
 
 Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part One: {Day4.SumAccessiblePaperRollsPart1()}");
 Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part Two: {Day4.SumAccessiblePaperRollsPart2()}");
+*/
+
+Console.WriteLine($"Day 5 Fresh Ingredients - Part One: {Day5.SumFreshIngredientsPart1()}");
+Console.WriteLine($"Day 5 Fresh Ingredients - Part One: {Day5.SumFreshIngredientsPart2()}");
