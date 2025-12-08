@@ -12,6 +12,7 @@
     <None Remove="Day3BatteryBanks.txt" />
     <None Remove="Day4PaperGrid.txt" />
     <None Remove="Day5IngredientDB.txt" />
+    <None Remove="Day6MathWorksheet.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +29,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Day5IngredientDB.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Day6MathWorksheet.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
