@@ -20,4 +20,4 @@ Console.WriteLine($"Day 5 Fresh Ingredients - Part One: {Day5.SumFreshIngredient
 */
 
 Console.WriteLine($"Day 6 Math Worksheet - Part One: {Day6.SolveMathWorksheetPart1()}");
-//Console.WriteLine($"Day 6 Math Worksheet - Part One: {Day6.SolveMathWorksheetPart2()}");
+Console.WriteLine($"Day 6 Math Worksheet - Part One: {Day6.SolveMathWorksheetPart2()}");

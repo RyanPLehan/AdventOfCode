@@ -65,37 +65,28 @@ internal static class Day6
     {
         long answer = 0;
 
-        // Since we know that each InputValue is a of a specific length, if we put then into a 2 dim array, we can build an number from right to left
+        // Process each operator, but in column form from right to left to build the intended operator
         ProcessWorksheet((mp) =>
         {
             long tmp = 0;
             bool isInitialized = false;
             int rowCount = mp.Operands.Count;
             int colCount = mp.Operands[0].ToCharArray().Length;
-            char[,] parsedValues = new char[rowCount, colCount];
-
-            for (int row = 0; row < rowCount; row++)
-            {
-                char[] values = mp.Operands[row].ToCharArray();
-                for (int col = 0; col < colCount; col++)
-                {
-                    parsedValues[row, col] = values[col];
-                }
-            }
-
-            // Now iterate through 2 dim array by column and build number from right to left
+            
             for (int col = colCount - 1; col >= 0; col--)
             {
-                StringBuilder sb = new StringBuilder(10);
+                StringBuilder sb = new StringBuilder();
                 for (int row = 0; row < rowCount; row++)
-                    if (parsedValues[row, col] != ' ') sb.Append(parsedValues[row, col]);
+                    sb.Append(mp.Operands[row][col]);
 
+                string op = sb.ToString().Trim();
+                if (String.IsNullOrWhiteSpace(op)) continue;
 
-                long parsedValue = Int64.Parse(sb.ToString());
+                long operand = Int64.Parse(op);
 
                 if (!isInitialized)
                 {
-                    tmp = parsedValue;
+                    tmp = operand;
                     isInitialized = true;
                     continue;
                 }
@@ -103,19 +94,19 @@ internal static class Day6
                 switch (mp.Operator)
                 {
                     case '+':
-                        tmp += parsedValue;
+                        tmp += operand;
                         break;
 
                     case '-':
-                        tmp -= parsedValue;
+                        tmp -= operand;
                         break;
 
                     case '*':
-                        tmp *= parsedValue;
+                        tmp *= operand;
                         break;
 
                     case '/':
-                        tmp /= parsedValue;
+                        tmp /= operand;
                         break;
                 }
             }
