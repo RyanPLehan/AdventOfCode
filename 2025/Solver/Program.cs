@@ -16,8 +16,12 @@ Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part One: {Day4.Sum
 Console.WriteLine($"Day 4 Accessible Number of Paper Rolls - Part Two: {Day4.SumAccessiblePaperRollsPart2()}");
 
 Console.WriteLine($"Day 5 Fresh Ingredients - Part One: {Day5.SumFreshIngredientsPart1()}");
-Console.WriteLine($"Day 5 Fresh Ingredients - Part One: {Day5.SumFreshIngredientsPart2()}");
-*/
+Console.WriteLine($"Day 5 Fresh Ingredients - Part Two: {Day5.SumFreshIngredientsPart2()}");
+
 
 Console.WriteLine($"Day 6 Math Worksheet - Part One: {Day6.SolveMathWorksheetPart1()}");
-Console.WriteLine($"Day 6 Math Worksheet - Part One: {Day6.SolveMathWorksheetPart2()}");
+Console.WriteLine($"Day 6 Math Worksheet - Part Two: {Day6.SolveMathWorksheetPart2()}");
+*/
+
+Console.WriteLine($"Day 7 Binary Tree Tachyon Beam - Part One: {Day7.CountTachyonBeamSplitsPart1()}");
+Console.WriteLine($"Day 7 Binary Tree Tachyon Beam - Part Two: {Day7.CountTachyonBeamSplitsPart2()}");

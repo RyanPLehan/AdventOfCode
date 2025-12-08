@@ -39,8 +39,6 @@ internal static class Day5
 
     public static long SumFreshIngredientsPart2()
     {
-        long freshCnt = 0;
-
         // We sort so that there is no need to worry about working ranges from both ends
         var ingredientRanges = GetIngredientRanges().OrderBy(x => x.Begin).ToList();
         var noOverlappingRanges = new List<IngredientRange>();
