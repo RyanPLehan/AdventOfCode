@@ -46,7 +46,8 @@ internal static class Day8
 
         public ImmutableArray<PairedJunctionBoxes> Connections { get => _connections.Values.ToImmutableArray(); }
         public bool ContainsConnection(PairedJunctionBoxes connection) => _connections.ContainsKey(connection.Key);
-        public bool ContainsJunctionBox(JunctionBox junctionBox) => _connections.Values.Any(x => x.JBox1 == junctionBox || x.JBox2 == junctionBox);
+        public bool ContainsJunctionBox(JunctionBox junctionBox) => 
+            _connections.Values.Any(x => x.JBox1.ID == junctionBox.ID || x.JBox2.ID == junctionBox.ID);
 
         public void AddConnection(PairedJunctionBoxes connection)
         {
@@ -57,14 +58,14 @@ internal static class Day8
         {
             get
             {
-                IList<JunctionBox> list = new List<JunctionBox>();
+                HashSet<string> hs = new HashSet<string>();
                 foreach (var connection in _connections.Values)
                 {
-                    list.Add(connection.JBox1);
-                    list.Add(connection.JBox2);
+                    hs.Add(connection.JBox1.ID);
+                    hs.Add(connection.JBox2.ID);
                 }
 
-                return list.Distinct().Count();
+                return hs.Count();
             }
         }
     }
