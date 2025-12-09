@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using System.ComponentModel;
+using System.Text.Json;
 
 namespace Solver;
 
@@ -24,12 +27,72 @@ internal static class Day8
     private class JunctionBox()
     {
         public Coordinate Coordinate { get; init; }
-        public Circuit Circuit { get; set; }
+        public Circuit? Circuit { get; set; } = null;
     }
 
     private class Circuit()
     {
-        IList<JunctionBox> JunctionBoxes = new List<JunctionBox>();
+        public IList<JunctionBox> JunctionBoxes = new List<JunctionBox>();
+    }
+
+
+    public static long GetSizeOfLargestCircuitsPart1(int topLargestCircuits)
+    {
+        IList<Circuit> circuits = CreateCircuits();
+        IList<Circuit> largestCircuits = circuits.OrderByDescending(x => x.JunctionBoxes.Count)
+                                                 .Take(topLargestCircuits)
+                                                 .ToList();
+
+        long total = largestCircuits[0].JunctionBoxes.Count;
+        for (int i = 1; i < largestCircuits.Count; i++)
+            total *= largestCircuits[i].JunctionBoxes.Count;
+
+        return total;
+    }
+
+    private static IList<Circuit> CreateCircuits()
+    {
+        IList<Circuit> circuits = new List<Circuit>();
+        IList<JunctionBox> junctionBoxes = GetJunctionBoxes();
+
+        foreach (JunctionBox jb in junctionBoxes)
+        {
+            // if already in circuit, just move on to next one
+            if (jb.Circuit != null) continue;
+
+            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
+            foreach (JunctionBox compareTo in junctionBoxes)
+            {
+                // Don't compare to itself
+                if (jb == compareTo) continue;
+
+                distances.Add(compareTo, CalcDistance(jb.Coordinate, compareTo.Coordinate));
+            }
+
+            // Sort by distance
+            var closestJunctionBox = distances.OrderBy(x => x.Value)
+                                              .Select(x => x.Key)
+                                              .First();
+
+            // Check to see if closest junction box is already in a circuit
+            // if so, just add to the existing circuit
+            if (closestJunctionBox.Circuit != null)
+            {
+                closestJunctionBox.Circuit.JunctionBoxes.Add(jb);
+                jb.Circuit = closestJunctionBox.Circuit;
+            }
+            else
+            {
+                Circuit circuit = new Circuit();
+                circuits.Add(circuit);
+                circuit.JunctionBoxes.Add(jb);
+                circuit.JunctionBoxes.Add(closestJunctionBox);
+                jb.Circuit = circuit;
+                closestJunctionBox.Circuit = circuit;
+            }
+        }
+
+        return circuits;
     }
 
     private static IList<JunctionBox> GetJunctionBoxes()
