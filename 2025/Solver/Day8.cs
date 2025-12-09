@@ -1,10 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using System.Collections.Immutable;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
-using System.ComponentModel;
-using System.Text.Json;
+using System.Diagnostics;
 
 namespace Solver;
 
@@ -28,100 +27,178 @@ internal static class Day8
     {
         public string ID { get => $"{Coordinate.X} - {Coordinate.Y} - {Coordinate.Z}"; }
         public Coordinate Coordinate { get; init; }
-        public Circuit? Circuit { get; set; } = null;
+        //public Circuit? Circuit { get; set; } = null;
+    }
+
+    private class PairedJunctionBoxes
+    {
+        public string Key
+        { get => (JBox1.Coordinate.X < JBox2.Coordinate.X) ? $"{JBox1.ID} : {JBox2.ID}" : $"{JBox1.ID} : {JBox2.ID}"; }
+
+        public JunctionBox JBox1 { get; init; }
+        public JunctionBox JBox2 { get; init; }
+        public double Distance { get; init; }
     }
 
     private class Circuit()
     {
-        public IList<JunctionBox> JunctionBoxes = new List<JunctionBox>();
+        private IDictionary<string, PairedJunctionBoxes> _connections = new Dictionary<string, PairedJunctionBoxes>();
+
+        public ImmutableArray<PairedJunctionBoxes> Connections { get => _connections.Values.ToImmutableArray(); }
+        public bool ContainsConnection(PairedJunctionBoxes connection) => _connections.ContainsKey(connection.Key);
+        public bool ContainsJunctionBox(JunctionBox junctionBox) => _connections.Values.Any(x => x.JBox1 == junctionBox || x.JBox2 == junctionBox);
+
+        public void AddConnection(PairedJunctionBoxes connection)
+        {
+            _connections.Add(connection.Key, connection);
+        }
+
+        public int DistinctJunctionBoxCount 
+        {
+            get
+            {
+                IList<JunctionBox> list = new List<JunctionBox>();
+                foreach (var connection in _connections.Values)
+                {
+                    list.Add(connection.JBox1);
+                    list.Add(connection.JBox2);
+                }
+
+                return list.Distinct().Count();
+            }
+        }
     }
 
-    private class JunctionBoxDistance
-    {
-        public JunctionBox[] PairedJunctionBoxes { get; } = new JunctionBox[2];
-        public double Distance { get; set; }
-    }
 
     public static long GetSizeOfLargestCircuitsPart1(int topLargestCircuits)
     {
         IList<Circuit> circuits = CreateCircuits();
-        IList<Circuit> largestCircuits = circuits.OrderByDescending(x => x.JunctionBoxes.Count)
+        Debug.WriteLine($"Total unique junction boxes: {circuits.Select(x => x.DistinctJunctionBoxCount).Sum()}");
+
+        
+        Debug.WriteLine("");
+        Debug.WriteLine("Circuits");
+        foreach (var circuit in circuits)
+        {
+            foreach (var pjb in circuit.Connections)
+                Debug.WriteLine($"JBox1: {pjb.JBox1.ID}  JBox2: {pjb.JBox2.ID}   Distance: {pjb.Distance}");
+
+            Debug.WriteLine("");
+        }
+        
+
+        IList<Circuit> largestCircuits = circuits.OrderByDescending(x => x.Connections.Length)
                                                  .Take(topLargestCircuits)
                                                  .ToList();
 
-        long total = largestCircuits[0].JunctionBoxes.Count;
-        for (int i = 1; i < largestCircuits.Count; i++)
-            total *= largestCircuits[i].JunctionBoxes.Count;
-
+        long total = 0;
+        for (int i = 0; i < largestCircuits.Count; i++)
+        {
+            if (i == 0) total = largestCircuits[i].DistinctJunctionBoxCount;
+            else total *= largestCircuits[i].DistinctJunctionBoxCount;
+        }
+           
         return total;
     }
 
-    private static IList<Circuit> CreateCircuits()
+    private static IList<Circuit> CreateCircuits(int maxConnections = 0)
     {
         IList<Circuit> circuits = new List<Circuit>();
         IList<JunctionBox> junctionBoxes = GetJunctionBoxes();
-        IList<JunctionBoxDistance> jbDistances = CalcAllPossibleDistances(junctionBoxes).OrderBy(x => x.Distance).ToList();
-        
 
-        foreach (JunctionBoxDistance jbd in jbDistances)
+        IList<PairedJunctionBoxes> pairedJBoxList = CalcDistances(junctionBoxes).OrderBy(x => x.Distance)
+                                                                                .ToList();
+
+        int totalAdded = 0;
+        for (int i = 0; 
+             i < pairedJBoxList.Count && ((maxConnections == 0) || (maxConnections > 0 && totalAdded <= maxConnections));
+             i++)
         {
-            // create new circuit if both don't already belong to one
-            if (jbd.PairedJunctionBoxes[0].Circuit == null &&
-                jbd.PairedJunctionBoxes[1].Circuit == null)
+            PairedJunctionBoxes pjb = pairedJBoxList[i];
+
+            // Check to see if they are both in the same circuit
+            if (circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) && x.ContainsJunctionBox(pjb.JBox2)).Any())
             {
-                Circuit circuit = new Circuit();
-                circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[0]);
-                circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[1]);
-                jbd.PairedJunctionBoxes[0].Circuit = circuit;
-                jbd.PairedJunctionBoxes[1].Circuit = circuit;
-                circuits.Add(circuit);
+                foreach (Circuit c in circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) && x.ContainsJunctionBox(pjb.JBox2)))
+                    Debug.WriteLine("In Both");
+
+                continue;
+            }
+                
+
+            totalAdded++;
+
+            Circuit? circuit = null;
+            // Add to existing circuit, if available
+            circuit = circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) &&
+                                          !x.ContainsJunctionBox(pjb.JBox2))
+                              .FirstOrDefault();
+
+            if (circuit != null)
+            {
+                circuit.AddConnection(pjb);
                 continue;
             }
 
-            // Check to see if both already belong to a circuit
-            if (jbd.PairedJunctionBoxes[0].Circuit != null &&
-                jbd.PairedJunctionBoxes[1].Circuit != null)
-                continue;
+            // Add to existing circuit, if available
+            circuit = circuits.Where(x => x.ContainsJunctionBox(pjb.JBox2) &&
+                                          !x.ContainsJunctionBox(pjb.JBox1))
+                              .FirstOrDefault();
 
-            // Combine junction boxes to existing circuit
-            if (jbd.PairedJunctionBoxes[0].Circuit != null)
+            if (circuit != null)
             {
-                jbd.PairedJunctionBoxes[0].Circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[1]);
-                jbd.PairedJunctionBoxes[1].Circuit = jbd.PairedJunctionBoxes[0].Circuit;
+                circuit.AddConnection(pjb);
+                continue;
             }
-            else
-            {
-                jbd.PairedJunctionBoxes[1].Circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[0]);
-                jbd.PairedJunctionBoxes[0].Circuit = jbd.PairedJunctionBoxes[1].Circuit;
-            }
+
+
+            // Whole new Circuit
+            circuit = new Circuit();
+            circuit.AddConnection(pjb);
+            circuits.Add(circuit);
         }
 
         return circuits;
     }
 
-    private static IList<JunctionBoxDistance> CalcAllPossibleDistances(IList<JunctionBox> junctionBoxes)
+    private static IList<PairedJunctionBoxes> CalcDistances(IList<JunctionBox> junctionBoxes)
     {
-        IList<JunctionBoxDistance> distances = new List<JunctionBoxDistance>();
-
-        foreach (JunctionBox jb in junctionBoxes)
+        IList<PairedJunctionBoxes> pairedJBoxes = new List<PairedJunctionBoxes>();
+        for (int i = 0; i < junctionBoxes.Count - 1; i++)
         {
-            foreach (JunctionBox compareTo in junctionBoxes)
+            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
+            for (int j = i+1; j < junctionBoxes.Count; j++)
             {
+                var jb1 = junctionBoxes[i];
+                var jb2 = junctionBoxes[j];
+
                 // Don't compare to itself
-                if (jb == compareTo) continue;
+                if (jb1 == jb2) continue;
 
-                // Don't compare if two are already in list
-                if (distances.Any(x => x.PairedJunctionBoxes.Contains(jb)) &&
-                    distances.Any(x => x.PairedJunctionBoxes.Contains(compareTo))) continue;
+                // Produces every combination
+                PairedJunctionBoxes pairedJB = new PairedJunctionBoxes()
+                {
+                    JBox1 = jb1,
+                    JBox2 = jb2,
+                    Distance = CalcDistance(jb1.Coordinate, jb2.Coordinate),
+                };
+                pairedJBoxes.Add(pairedJB);
 
-                var distance = new JunctionBoxDistance() { Distance = CalcDistance(jb.Coordinate, compareTo.Coordinate) };
-                distance.PairedJunctionBoxes[0] = jb;
-                distance.PairedJunctionBoxes[1] = compareTo;
-                distances.Add(distance);
+                // Only take the first shortest distance
+                /*
+                var shortestJBox = distances.OrderBy(x => x.Value).First();
+                PairedJunctionBoxes pairedJB = new PairedJunctionBoxes()
+                {
+                    JBox1 = jb1,
+                    JBox2 = shortestJBox.Key,
+                    Distance = shortestJBox.Value,
+                };
+                pairedJBoxes.Add(pairedJB);
+                */
             }
         }
 
-        return distances;
+        return pairedJBoxes;
     }
 
 
@@ -149,6 +226,8 @@ internal static class Day8
         long deltaX = coordinate1.X - coordinate2.X;
         long deltaY = coordinate1.Y - coordinate2.Y;
         long deltaZ = coordinate1.Z - coordinate2.Z;
-        return Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2) + Math.Pow(deltaZ, 2));
+
+        return Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2) + Math.Pow(deltaZ, 2);
+        //return Math.Sqrt(Math.Pow(deltaX, 2) + Math.Pow(deltaY, 2) + Math.Pow(deltaZ, 2));
     }
 }
