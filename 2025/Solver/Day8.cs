@@ -26,6 +26,7 @@ internal static class Day8
 
     private class JunctionBox()
     {
+        public string ID { get => $"{Coordinate.X} - {Coordinate.Y} - {Coordinate.Z}"; }
         public Coordinate Coordinate { get; init; }
         public Circuit? Circuit { get; set; } = null;
     }
@@ -35,6 +36,11 @@ internal static class Day8
         public IList<JunctionBox> JunctionBoxes = new List<JunctionBox>();
     }
 
+    private class JunctionBoxDistance
+    {
+        public JunctionBox[] PairedJunctionBoxes { get; } = new JunctionBox[2];
+        public double Distance { get; set; }
+    }
 
     public static long GetSizeOfLargestCircuitsPart1(int topLargestCircuits)
     {
@@ -54,46 +60,70 @@ internal static class Day8
     {
         IList<Circuit> circuits = new List<Circuit>();
         IList<JunctionBox> junctionBoxes = GetJunctionBoxes();
+        IList<JunctionBoxDistance> jbDistances = CalcAllPossibleDistances(junctionBoxes).OrderBy(x => x.Distance).ToList();
+        
 
-        foreach (JunctionBox jb in junctionBoxes)
+        foreach (JunctionBoxDistance jbd in jbDistances)
         {
-            // if already in circuit, just move on to next one
-            if (jb.Circuit != null) continue;
-
-            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
-            foreach (JunctionBox compareTo in junctionBoxes)
+            // create new circuit if both don't already belong to one
+            if (jbd.PairedJunctionBoxes[0].Circuit == null &&
+                jbd.PairedJunctionBoxes[1].Circuit == null)
             {
-                // Don't compare to itself
-                if (jb == compareTo) continue;
-
-                distances.Add(compareTo, CalcDistance(jb.Coordinate, compareTo.Coordinate));
+                Circuit circuit = new Circuit();
+                circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[0]);
+                circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[1]);
+                jbd.PairedJunctionBoxes[0].Circuit = circuit;
+                jbd.PairedJunctionBoxes[1].Circuit = circuit;
+                circuits.Add(circuit);
+                continue;
             }
 
-            // Sort by distance
-            var closestJunctionBox = distances.OrderBy(x => x.Value)
-                                              .Select(x => x.Key)
-                                              .First();
+            // Check to see if both already belong to a circuit
+            if (jbd.PairedJunctionBoxes[0].Circuit != null &&
+                jbd.PairedJunctionBoxes[1].Circuit != null)
+                continue;
 
-            // Check to see if closest junction box is already in a circuit
-            // if so, just add to the existing circuit
-            if (closestJunctionBox.Circuit != null)
+            // Combine junction boxes to existing circuit
+            if (jbd.PairedJunctionBoxes[0].Circuit != null)
             {
-                closestJunctionBox.Circuit.JunctionBoxes.Add(jb);
-                jb.Circuit = closestJunctionBox.Circuit;
+                jbd.PairedJunctionBoxes[0].Circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[1]);
+                jbd.PairedJunctionBoxes[1].Circuit = jbd.PairedJunctionBoxes[0].Circuit;
             }
             else
             {
-                Circuit circuit = new Circuit();
-                circuits.Add(circuit);
-                circuit.JunctionBoxes.Add(jb);
-                circuit.JunctionBoxes.Add(closestJunctionBox);
-                jb.Circuit = circuit;
-                closestJunctionBox.Circuit = circuit;
+                jbd.PairedJunctionBoxes[1].Circuit.JunctionBoxes.Add(jbd.PairedJunctionBoxes[0]);
+                jbd.PairedJunctionBoxes[0].Circuit = jbd.PairedJunctionBoxes[1].Circuit;
             }
         }
 
         return circuits;
     }
+
+    private static IList<JunctionBoxDistance> CalcAllPossibleDistances(IList<JunctionBox> junctionBoxes)
+    {
+        IList<JunctionBoxDistance> distances = new List<JunctionBoxDistance>();
+
+        foreach (JunctionBox jb in junctionBoxes)
+        {
+            foreach (JunctionBox compareTo in junctionBoxes)
+            {
+                // Don't compare to itself
+                if (jb == compareTo) continue;
+
+                // Don't compare if two are already in list
+                if (distances.Any(x => x.PairedJunctionBoxes.Contains(jb)) &&
+                    distances.Any(x => x.PairedJunctionBoxes.Contains(compareTo))) continue;
+
+                var distance = new JunctionBoxDistance() { Distance = CalcDistance(jb.Coordinate, compareTo.Coordinate) };
+                distance.PairedJunctionBoxes[0] = jb;
+                distance.PairedJunctionBoxes[1] = compareTo;
+                distances.Add(distance);
+            }
+        }
+
+        return distances;
+    }
+
 
     private static IList<JunctionBox> GetJunctionBoxes()
     {
