@@ -25,12 +25,11 @@ internal static class Day8
 
     private class JunctionBox()
     {
-        public string ID { get => $"{Coordinate.X} - {Coordinate.Y} - {Coordinate.Z}"; }
+        public string ID { get => $"{Coordinate.X}.{Coordinate.Y}.{Coordinate.Z}"; }
         public Coordinate Coordinate { get; init; }
-        //public Circuit? Circuit { get; set; } = null;
     }
 
-    private class PairedJunctionBoxes
+    private class Connection
     {
         public string Key
         { get => (JBox1.Coordinate.X < JBox2.Coordinate.X) ? $"{JBox1.ID} : {JBox2.ID}" : $"{JBox1.ID} : {JBox2.ID}"; }
@@ -42,24 +41,22 @@ internal static class Day8
 
     private class Circuit()
     {
-        private IDictionary<string, PairedJunctionBoxes> _connections = new Dictionary<string, PairedJunctionBoxes>();
+        public List<Connection> Connections { get; private set; } = new List<Connection>();
 
-        public ImmutableArray<PairedJunctionBoxes> Connections { get => _connections.Values.ToImmutableArray(); }
-        public bool ContainsConnection(PairedJunctionBoxes connection) => _connections.ContainsKey(connection.Key);
-        public bool ContainsJunctionBox(JunctionBox junctionBox) => 
-            _connections.Values.Any(x => x.JBox1.ID == junctionBox.ID || x.JBox2.ID == junctionBox.ID);
+        public bool IsMerged { get; private set; } = false;
 
-        public void AddConnection(PairedJunctionBoxes connection)
-        {
-            _connections.Add(connection.Key, connection);
-        }
+        public bool ContainsConnection(Connection connection) => 
+            Connections.Where(x => x.Key == connection.Key).Any();
+
+        public bool ContainsJunctionBox(JunctionBox junctionBox) =>
+            Connections.Where(x => x.JBox1.ID == junctionBox.ID || x.JBox2.ID == junctionBox.ID).Any();
 
         public int DistinctJunctionBoxCount 
         {
             get
             {
                 HashSet<string> hs = new HashSet<string>();
-                foreach (var connection in _connections.Values)
+                foreach (var connection in Connections)
                 {
                     hs.Add(connection.JBox1.ID);
                     hs.Add(connection.JBox2.ID);
@@ -68,27 +65,24 @@ internal static class Day8
                 return hs.Count();
             }
         }
+
+        public void Merge(Circuit circuit)
+        {
+            if (circuit.IsMerged) return;
+
+            this.Connections.AddRange(circuit.Connections);
+            circuit.IsMerged = true;
+            circuit.Connections.Clear();
+        }
     }
 
 
-    public static long GetSizeOfLargestCircuitsPart1(int topLargestCircuits)
+    public static long SolvePart1()
     {
-        IList<Circuit> circuits = CreateCircuits();
-        Debug.WriteLine($"Total unique junction boxes: {circuits.Select(x => x.DistinctJunctionBoxCount).Sum()}");
-
-        
-        Debug.WriteLine("");
-        Debug.WriteLine("Circuits");
-        foreach (var circuit in circuits)
-        {
-            foreach (var pjb in circuit.Connections)
-                Debug.WriteLine($"JBox1: {pjb.JBox1.ID}  JBox2: {pjb.JBox2.ID}   Distance: {pjb.Distance}");
-
-            Debug.WriteLine("");
-        }
-        
-
-        IList<Circuit> largestCircuits = circuits.OrderByDescending(x => x.Connections.Length)
+        const int topLargestCircuits = 3;
+        const int maxConnections = 1000;            // Use 10 for Sample, use 1000 for puzzle
+        IList<Circuit> circuits = CreateCircuits(maxConnections);     
+        IList<Circuit> largestCircuits = circuits.OrderByDescending(x => x.Connections.Count)
                                                  .Take(topLargestCircuits)
                                                  .ToList();
 
@@ -102,73 +96,130 @@ internal static class Day8
         return total;
     }
 
-    private static IList<Circuit> CreateCircuits(int maxConnections = 0)
+    public static long SolvePart2()
+    {
+        Connection conn = GetLastConnectionToFormSingleCircuit();
+        return (long)conn.JBox1.Coordinate.X * (long)conn.JBox2.Coordinate.X;
+    }
+
+
+    private static IList<Circuit> CreateCircuits(int maxConnections)
     {
         IList<Circuit> circuits = new List<Circuit>();
         IList<JunctionBox> junctionBoxes = GetJunctionBoxes();
+        IList<Connection> connections = CalcAllDistances(junctionBoxes).OrderBy(x => x.Distance).ToList();
 
-        IList<PairedJunctionBoxes> pairedJBoxList = CalcDistances(junctionBoxes).OrderBy(x => x.Distance)
-                                                                                .ToList();
-
-        int totalAdded = 0;
-        for (int i = 0; 
-             i < pairedJBoxList.Count && ((maxConnections == 0) || (maxConnections > 0 && totalAdded <= maxConnections));
-             i++)
+        for (int i = 0; i < connections.Count && i < maxConnections; i++)
         {
-            PairedJunctionBoxes pjb = pairedJBoxList[i];
-
-            // Check to see if they are both in the same circuit
-            if (circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) && x.ContainsJunctionBox(pjb.JBox2)).Any())
-            {
-                foreach (Circuit c in circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) && x.ContainsJunctionBox(pjb.JBox2)))
-                    Debug.WriteLine("In Both");
-
-                continue;
-            }
-                
-
-            totalAdded++;
-
             Circuit? circuit = null;
-            // Add to existing circuit, if available
-            circuit = circuits.Where(x => x.ContainsJunctionBox(pjb.JBox1) &&
-                                          !x.ContainsJunctionBox(pjb.JBox2))
-                              .FirstOrDefault();
+            var conn = connections[i];
 
-            if (circuit != null)
-            {
-                circuit.AddConnection(pjb);
+            // Check to see if pair is already in the same circuit
+            if (circuits.Where(x => x.ContainsJunctionBox(conn.JBox1) &&
+                                    x.ContainsJunctionBox(conn.JBox2))
+                        .Any())
                 continue;
-            }
 
-            // Add to existing circuit, if available
-            circuit = circuits.Where(x => x.ContainsJunctionBox(pjb.JBox2) &&
-                                          !x.ContainsJunctionBox(pjb.JBox1))
-                              .FirstOrDefault();
 
-            if (circuit != null)
+            // This will add to existing circuit
+            var mergeCircuits = circuits.Where(x => x.ContainsJunctionBox(conn.JBox1) || 
+                                                    x.ContainsJunctionBox(conn.JBox2))
+                                        .ToList();
+            if (mergeCircuits.Any())
             {
-                circuit.AddConnection(pjb);
-                continue;
+                circuit = mergeCircuits[0];         // Get first one
+                circuit.Connections.Add(conn);      // add connection
+
+                // Now merge circuits into one
+                for (int j = mergeCircuits.Count - 1; j > 0; j--)
+                    circuit.Merge(mergeCircuits[j]);
+
+                // Remove merged
+                circuits = circuits.Where(x => !x.IsMerged).ToList();
             }
-
-
-            // Whole new Circuit
-            circuit = new Circuit();
-            circuit.AddConnection(pjb);
-            circuits.Add(circuit);
+            else
+            {
+                // Whole new Circuit
+                circuit = new Circuit();
+                circuit.Connections.Add(conn);
+                circuits.Add(circuit);
+            }
         }
 
+        // Make sure to not to return any merged circuits
         return circuits;
     }
 
-    private static IList<PairedJunctionBoxes> CalcDistances(IList<JunctionBox> junctionBoxes)
+
+    private static Connection GetLastConnectionToFormSingleCircuit()
     {
-        IList<PairedJunctionBoxes> pairedJBoxes = new List<PairedJunctionBoxes>();
+        IList<Circuit> circuits = new List<Circuit>();
+        IList<JunctionBox> junctionBoxes = GetJunctionBoxes();
+        IList<Connection> connections = CalcAllDistances(junctionBoxes).OrderBy(x => x.Distance).ToList();
+
+        HashSet<JunctionBox> connectedJunctionBoxes = new HashSet<JunctionBox>();
+
+        Connection conn = null;
+        for (int i = 0; i < connections.Count; i++)
+        {
+            Circuit? circuit = null;
+            conn = connections[i];
+            
+            connectedJunctionBoxes.Add(conn.JBox1);
+            connectedJunctionBoxes.Add(conn.JBox2);
+
+            // Check to see if pair is already in the same circuit
+            if (circuits.Where(x => x.ContainsJunctionBox(conn.JBox1) &&
+                                    x.ContainsJunctionBox(conn.JBox2))
+                        .Any())
+                continue;
+
+
+            // This will add to existing circuit
+            var mergeCircuits = circuits.Where(x => x.ContainsJunctionBox(conn.JBox1) ||
+                                                    x.ContainsJunctionBox(conn.JBox2))
+                                        .ToList();
+            if (mergeCircuits.Any())
+            {
+                circuit = mergeCircuits[0];         // Get first one
+                circuit.Connections.Add(conn);      // add connection
+
+                // Now merge circuits into one
+                for (int j = mergeCircuits.Count - 1; j > 0; j--)
+                    circuit.Merge(mergeCircuits[j]);
+
+                // Remove merged
+                circuits = circuits.Where(x => !x.IsMerged).ToList();
+            }
+            else
+            {
+                // Whole new Circuit
+                circuit = new Circuit();
+                circuit.Connections.Add(conn);
+                circuits.Add(circuit);
+            }
+
+            // Break when all junction boxes have been connected and there is only 1 circuit
+            if (circuits.Count == 1 &&
+                junctionBoxes.Count == connectedJunctionBoxes.Count)
+                break;
+        }
+
+        // Make sure to not to return any merged circuits
+        return conn;
+    }
+
+
+
+
+
+
+    private static IList<Connection> CalcAllDistances(IList<JunctionBox> junctionBoxes)
+    {
+        IList<Connection> connections = new List<Connection>();
         for (int i = 0; i < junctionBoxes.Count - 1; i++)
         {
-            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
-            for (int j = i+1; j < junctionBoxes.Count; j++)
+            for (int j = i + 1; j < junctionBoxes.Count; j++)
             {
                 var jb1 = junctionBoxes[i];
                 var jb2 = junctionBoxes[j];
@@ -176,30 +227,49 @@ internal static class Day8
                 // Don't compare to itself
                 if (jb1 == jb2) continue;
 
-                // Produces every combination
-                PairedJunctionBoxes pairedJB = new PairedJunctionBoxes()
+                Connection conn = new Connection()
                 {
                     JBox1 = jb1,
                     JBox2 = jb2,
                     Distance = CalcDistance(jb1.Coordinate, jb2.Coordinate),
                 };
-                pairedJBoxes.Add(pairedJB);
 
-                // Only take the first shortest distance
-                /*
-                var shortestJBox = distances.OrderBy(x => x.Value).First();
-                PairedJunctionBoxes pairedJB = new PairedJunctionBoxes()
-                {
-                    JBox1 = jb1,
-                    JBox2 = shortestJBox.Key,
-                    Distance = shortestJBox.Value,
-                };
-                pairedJBoxes.Add(pairedJB);
-                */
+                connections.Add(conn);
             }
         }
 
-        return pairedJBoxes;
+        return connections;
+    }
+
+    private static IList<Connection> CalcShortestDistances(IList<JunctionBox> junctionBoxes)
+    {
+        IList<Connection> connections = new List<Connection>();
+        for (int i = 0; i < junctionBoxes.Count - 1; i++)
+        {
+            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
+            for (int j = i + 1; j < junctionBoxes.Count; j++)
+            {
+                var jb1 = junctionBoxes[i];
+                var jb2 = junctionBoxes[j];
+
+                // Don't compare to itself
+                if (jb1 == jb2) continue;
+                distances.Add(jb2, CalcDistance(jb1.Coordinate, jb2.Coordinate));
+            }
+
+            // Only take the first shortest distance
+            var shortestJBox = distances.OrderBy(x => x.Value).First();
+            Connection conn = new Connection()
+            {
+                JBox1 = junctionBoxes[i],
+                JBox2 = shortestJBox.Key,
+                Distance = shortestJBox.Value,
+            };
+
+            connections.Add(conn);
+        }
+
+        return connections;
     }
 
 

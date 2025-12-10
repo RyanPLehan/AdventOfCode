@@ -10,7 +10,7 @@ internal static class Day1
     private const int MAX_CLICKS = 100;
     private const int START_DIAL = 50;
 
-    public static int DecodePasswordPart1()
+    public static int SolvePart1()
     {
         int password = 0;
         int dial = START_DIAL;
@@ -23,7 +23,7 @@ internal static class Day1
         return password;
     }
 
-    public static int DecodePasswordPart2()
+    public static int SolvePart2()
     {
         int password = 0;
         int dial = START_DIAL;

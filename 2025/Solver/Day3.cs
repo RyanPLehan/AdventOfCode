@@ -9,7 +9,7 @@ namespace Solver;
 
 internal static class Day3
 {
-    public static long SumBatteryJoltsPart1A()
+    public static long SolvePart1A()
     {
         long jolts = 0;
         ProcessBatteryBanks((batteries) =>
@@ -29,7 +29,7 @@ internal static class Day3
         return jolts;
     }
 
-    public static long SumBatteryJoltsPart1B()
+    public static long SolvePart1B()
     {
         const int MAX_BATTERIES_ON = 2;
         long totalJoltz = 0;
@@ -47,7 +47,7 @@ internal static class Day3
     }
 
 
-    public static long SumBatteryJoltsPart2()
+    public static long SolvePart2()
     {
         const int MAX_BATTERIES_ON = 12;
         long totalJoltz = 0;

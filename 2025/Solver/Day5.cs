@@ -14,7 +14,7 @@ internal static class Day5
         public long End { get; set; }
     }
 
-    public static int SumFreshIngredientsPart1()
+    public static int SolvePart1()
     {
         int freshCnt = 0;
         var ingredientRanges = GetIngredientRanges();
@@ -37,7 +37,7 @@ internal static class Day5
 
     
 
-    public static long SumFreshIngredientsPart2()
+    public static long SolvePart2()
     {
         // We sort so that there is no need to worry about working ranges from both ends
         var ingredientRanges = GetIngredientRanges().OrderBy(x => x.Begin).ToList();

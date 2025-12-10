@@ -30,7 +30,7 @@ internal static class Day7
     }
 
 
-    public static int CountTachyonBeamSplitsPart1()
+    public static int SolvePart1()
     {
         // Use hashset to keep list of visited nodes
         HashSet<string> nodeIds = new HashSet<string>();
@@ -52,7 +52,7 @@ internal static class Day7
 
     // Idea: For each split on each tree level, there are 2 paths
     // Therefore the max total will be SUM += Splits(n) * 2: where Splits(n) is the number of splits on level n
-    public static long CountTachyonBeamSplitsPart2()
+    public static long SolvePart2()
     {
         IDictionary<Coordinate, TachyonNode> distinctNodes = CreateBinaryTree();
         var root = distinctNodes.Values.First();

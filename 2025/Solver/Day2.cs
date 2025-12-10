@@ -8,7 +8,7 @@ namespace Solver;
 
 internal static class Day2
 {
-    public static long SumCountBadProductIdsPart1()
+    public static long SolvePart1()
     {
         long sum = 0;
 
@@ -23,7 +23,7 @@ internal static class Day2
         return sum;
     }
 
-    public static long SumCountBadProductIdsPart2()
+    public static long SolvePart2()
     {
         long sum = 0;
 

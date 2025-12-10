@@ -10,7 +10,7 @@ internal static class Day4
 {
     private static bool[,]? _boolGrid = null;
 
-    public static int SumAccessiblePaperRollsPart1()
+    public static int SolvePart1()
     {
         const int MAX_ROW = 3;
         const int MAX_COL = 3;
@@ -37,7 +37,7 @@ internal static class Day4
         return accessCount;
     }
 
-    public static int SumAccessiblePaperRollsPart2()
+    public static int SolvePart2()
     {
         const int MAX_ROW = 3;
         const int MAX_COL = 3;

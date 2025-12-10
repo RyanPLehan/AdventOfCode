@@ -16,7 +16,7 @@ internal static class Day6
         public IList<string> Operands { get; set; }
     }
 
-    public static long SolveMathWorksheetPart1()
+    public static long SolvePart1()
     {
         long answer = 0;
 
@@ -61,7 +61,7 @@ internal static class Day6
         return answer;
     }
 
-    public static long SolveMathWorksheetPart2()
+    public static long SolvePart2()
     {
         long answer = 0;
 
