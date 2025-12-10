@@ -210,10 +210,6 @@ internal static class Day8
     }
 
 
-
-
-
-
     private static IList<Connection> CalcAllDistances(IList<JunctionBox> junctionBoxes)
     {
         IList<Connection> connections = new List<Connection>();
@@ -236,37 +232,6 @@ internal static class Day8
 
                 connections.Add(conn);
             }
-        }
-
-        return connections;
-    }
-
-    private static IList<Connection> CalcShortestDistances(IList<JunctionBox> junctionBoxes)
-    {
-        IList<Connection> connections = new List<Connection>();
-        for (int i = 0; i < junctionBoxes.Count - 1; i++)
-        {
-            IDictionary<JunctionBox, double> distances = new Dictionary<JunctionBox, double>();
-            for (int j = i + 1; j < junctionBoxes.Count; j++)
-            {
-                var jb1 = junctionBoxes[i];
-                var jb2 = junctionBoxes[j];
-
-                // Don't compare to itself
-                if (jb1 == jb2) continue;
-                distances.Add(jb2, CalcDistance(jb1.Coordinate, jb2.Coordinate));
-            }
-
-            // Only take the first shortest distance
-            var shortestJBox = distances.OrderBy(x => x.Value).First();
-            Connection conn = new Connection()
-            {
-                JBox1 = junctionBoxes[i],
-                JBox2 = shortestJBox.Key,
-                Distance = shortestJBox.Value,
-            };
-
-            connections.Add(conn);
         }
 
         return connections;

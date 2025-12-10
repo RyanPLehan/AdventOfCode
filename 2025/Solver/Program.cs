@@ -24,7 +24,9 @@ Console.WriteLine($"Day 6 Math Worksheet - Part Two: {Day6.SolvePart2()}");
 
 Console.WriteLine($"Day 7 Binary Tree Tachyon Beam - Part One: {Day7.SolvePart1()}");
 Console.WriteLine($"Day 7 Binary Tree Tachyon Beam - Part Two: {Day7.SolvePart2()}");
-*/
 
 Console.WriteLine($"Day 8 Junction Boxes and Circuits - Part One: {Day8.SolvePart1()}");
 Console.WriteLine($"Day 8 Junction Boxes and Circuits - Part Two: {Day8.SolvePart2()}");
+*/
+
+Console.WriteLine($"Day 9 Red Tiles - Part One: {Day9.SolvePart1()}");
