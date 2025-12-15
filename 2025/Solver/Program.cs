@@ -30,3 +30,4 @@ Console.WriteLine($"Day 8 Junction Boxes and Circuits - Part Two: {Day8.SolvePar
 */
 
 Console.WriteLine($"Day 9 Red Tiles - Part One: {Day9.SolvePart1()}");
+Console.WriteLine($"Day 9 Red Tiles - Part Two: {Day9.SolvePart2()}");
