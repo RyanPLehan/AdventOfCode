@@ -10,8 +10,8 @@ internal static class Day9
 {
     private class Tile
     {
-        public int X { get; init; }
-        public int Y { get; init; }
+        public long X { get; init; }
+        public long Y { get; init; }
     }
 
     private class Rectangle
@@ -20,7 +20,7 @@ internal static class Day9
         {
             Tile1 = tile1;
             Tile2 = tile2;
-            Area = (long)(Math.Abs(tile1.X - tile2.X) + 1) * (long)(Math.Abs(tile1.Y - tile2.Y) + 1);
+            Area = (Math.Abs(tile1.X - tile2.X) + 1) * (Math.Abs(tile1.Y - tile2.Y) + 1);
         }
 
         public long Area { get; private set; }
@@ -88,7 +88,7 @@ internal static class Day9
         foreach (var tile in tiles)
         {
             var col_row = tile.Split(',');
-            redTiles.Add(new Tile() { X = int.Parse(col_row[0]), Y = int.Parse(col_row[1]) });
+            redTiles.Add(new Tile() { X = long.Parse(col_row[0]), Y = long.Parse(col_row[1]) });
         }
 
         return redTiles;
@@ -185,64 +185,39 @@ internal static class Day9
 
 
     // Idea
-    // To check to see if tile is within a right triangle, will use the two acute angles to create an area using the Rectangle.
-    // Then check to see if the tile is within the 4 corners
+    // To check to see if tile is within a right triangle, will use the Area method and the Barycentric Coordinates method
+    // See: https://www.geeksforgeeks.org/dsa/check-whether-a-given-point-lies-inside-a-triangle-or-not/
     private static bool IsTileWithinPerimeter(Tile tile, IList<RightTriangle> perimeter)
     {
         bool result = false;
 
         foreach(var rt in perimeter)
         {
-            Tile? topLeft = null;
-            Tile? topRight = null;
-            Tile? bottomLeft = null;
-            Tile? bottomRight = null;
+            // Calc Area of right Triangle (ABC)
+            decimal rtArea = CalcTriangleArea(rt.RightAngle, rt.HorizontalAcuteAngle, rt.VerticalAcuteAngle);
 
-            if (rt.HorizontalAcuteAngle.Y < rt.VerticalAcuteAngle.Y)
-            {
-                if (rt.HorizontalAcuteAngle.X < rt.VerticalAcuteAngle.X)
-                {
-                    topLeft = rt.HorizontalAcuteAngle;
-                    bottomRight = rt.VerticalAcuteAngle;
-                    topRight = new Tile() { Y = topLeft.Y, X = bottomRight.X };
-                    bottomLeft = new Tile() { Y = bottomRight.Y, X = topLeft.X };
-                }
-                else
-                {
-                    topRight = rt.HorizontalAcuteAngle;
-                    bottomLeft = rt.VerticalAcuteAngle;
-                    topLeft = new Tile() { Y = topRight.Y, X = bottomLeft.X };
-                    bottomRight = new Tile() { Y = bottomLeft.Y, X = topRight.X };
-                }
-            }
+            // Calc area of PBC
+            decimal pbcArea = CalcTriangleArea(tile, rt.HorizontalAcuteAngle, rt.VerticalAcuteAngle);
 
-            if (rt.VerticalAcuteAngle.Y < rt.HorizontalAcuteAngle.Y)
-            {
-                if (rt.VerticalAcuteAngle.X < rt.HorizontalAcuteAngle.X)
-                {
-                    topLeft = rt.VerticalAcuteAngle;
-                    bottomRight = rt.HorizontalAcuteAngle;
-                    topRight = new Tile() { Y = topLeft.Y, X = bottomRight.X };
-                    bottomLeft = new Tile() { Y = bottomRight.Y, X = topLeft.X };
-                }
-                else
-                {
-                    topRight = rt.HorizontalAcuteAngle;
-                    bottomLeft = rt.VerticalAcuteAngle;
-                    topLeft = new Tile() { Y = topRight.Y, X = bottomLeft.X };
-                    bottomRight = new Tile() { Y = bottomLeft.Y, X = topRight.X };
-                }
-            }
+            // Calc area of PAC
+            decimal pacArea = CalcTriangleArea(tile, rt.RightAngle, rt.VerticalAcuteAngle);
 
+            // Calc area of PAB
+            decimal pabArea = CalcTriangleArea(tile, rt.RightAngle, rt.HorizontalAcuteAngle);
 
-            result = topLeft.Y <= tile.Y && topLeft.X <= tile.X &&
-                     topRight.Y <= tile.Y && topRight.X >= tile.X &&
-                     bottomLeft.Y >= tile.Y && bottomLeft.X <= tile.X &&
-                     bottomRight.Y >= tile.Y && bottomRight.X >= tile.X;
+            result = rtArea == (pbcArea + pacArea + pabArea);
 
             if (result) break;
         }
 
         return result;
+    }
+
+    private static decimal CalcTriangleArea(Tile tile1, Tile tile2, Tile tile3)
+    {
+        return
+        Math.Abs((tile1.X * (tile2.Y - tile3.Y) +
+                  tile2.X * (tile3.Y - tile1.Y) +
+                  tile3.X * (tile1.Y - tile2.Y)) / ((decimal)2.0));
     }
 }
